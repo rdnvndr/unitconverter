@@ -9,12 +9,16 @@ using namespace std;
 
 //! Переводит в единицу измерения
 double toUnit(double unit) {
+//    return unit * 180 / M_PI;
     return unit * 0.061048;
+//    return unit / 3;
 }
 
 //! Переводит из единицы измерения
 double fromUnit(double unit) {
+//    return unit * M_PI / 180;
     return unit / 0.061048;
+//     return unit * 3;
 }
 
 
@@ -64,28 +68,41 @@ double convert(double number, double (convertUnit)(double) ) {
 
     // Задаётся погрешность числа
     double ex1 = -5 * pow(10.0, -countOfDigits);
-    double ex2 =  4 * pow(10.0, -countOfDigits);
-
-    // Вычисляется погрешность сконвертированного числа
-    double ey = convertUnit(abs((number+ex2)-(number+ex1)));
+    double ex2 =  5 * pow(10.0, -countOfDigits);
 
     // Конвертируется число
-    double y = convertUnit(number);
+    double y  = convertUnit(number);
+    double y1 = convertUnit(number + ex1);
+    double y2 = convertUnit(number + ex2);
+
+    // Вычисляется погрешность сконвертированного числа
+    double ey  = abs(y2 - y1);
+    double ey1 = abs(y  - y1);
+    double ey2 = abs(y  - y2);
 
     if (ey != 0) {
         // Вычисляется точность сконвертированного числа
         int countOfZeros = zerosAfterDecimalPoint(ey);
 
         // Уточняется точность сконвертированного числа
-        if (ey * pow(10.0, countOfZeros) <= 5)
+        bool upperBoundCorrection = (y * pow(10.0, countOfZeros-1)
+                - floor(y * pow(10.0, countOfZeros-1))
+                + ey2 * pow(10.0, countOfZeros-1)) >= 1;
+        bool lowerBoundCorrection = (y1 * pow(10.0, countOfZeros-1)
+                - floor(y1 * pow(10.0, countOfZeros-1))
+                + ey1 * pow(10.0, countOfZeros-1)) >= 1;
+        if (upperBoundCorrection || lowerBoundCorrection)
             countOfZeros--;
 
         // Конвертируется число с заданной точностью
-        return roundNumber(y, countOfZeros);
+        double result = roundNumber(y, countOfZeros);
+        if (digitsAfterDecimalPoint(result)-1 != countOfZeros)
+            return y;
+        else
+            return result;
     } else {
         return y;
     }
-
 }
 
 int main(int argc, char *argv[])
@@ -98,7 +115,7 @@ int main(int argc, char *argv[])
     cout << "Input unit: " << srcUnit << "\n";
 
     double dstUnit = convert(srcUnit, toUnit);
-    double rslUnit = convert(dstUnit,  fromUnit);
+    double rslUnit = convert(dstUnit, fromUnit);
 
     cout << "To unit:    " << dstUnit << "\n";
     cout << "Result:     " << rslUnit << "\n";
