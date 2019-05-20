@@ -9,12 +9,12 @@ using namespace std;
 
 //! Переводит в единицу измерения
 double toUnit(double unit) {
-    return unit * 180 / M_PI;
+    return unit * 0.061048;
 }
 
 //! Переводит из единицы измерения
 double fromUnit(double unit) {
-    return unit * M_PI / 180;
+    return unit / 0.061048;
 }
 
 
@@ -69,16 +69,23 @@ double convert(double number, double (convertUnit)(double) ) {
     // Вычисляется погрешность сконвертированного числа
     double ey = convertUnit(abs((number+ex2)-(number+ex1)));
 
-    // Вычисляется точность сконвертированного числа
-    int countOfZeros = zerosAfterDecimalPoint(ey);
-
-    // Уточняется точность сконвертированного числа
-    if (ey * pow(10.0, countOfZeros) <= 5)
-        countOfZeros--;
-
-    // Конвертируется число с заданной точностью
+    // Конвертируется число
     double y = convertUnit(number);
-    return roundNumber(y, countOfZeros);
+
+    if (ey != 0) {
+        // Вычисляется точность сконвертированного числа
+        int countOfZeros = zerosAfterDecimalPoint(ey);
+
+        // Уточняется точность сконвертированного числа
+        if (ey * pow(10.0, countOfZeros) <= 5)
+            countOfZeros--;
+
+        // Конвертируется число с заданной точностью
+        return roundNumber(y, countOfZeros);
+    } else {
+        return y;
+    }
+
 }
 
 int main(int argc, char *argv[])
@@ -86,14 +93,15 @@ int main(int argc, char *argv[])
     double srcUnit;
     cout.precision(DBL_DIG);
 
-    printf("From unit: ");
+    printf("From unit:  ");
     cin >> srcUnit;
+    cout << "Input unit: " << srcUnit << "\n";
 
     double dstUnit = convert(srcUnit, toUnit);
     double rslUnit = convert(dstUnit,  fromUnit);
 
-    cout << "To unit: " << dstUnit << "\n";
-    cout << "Result:  " << rslUnit << "\n";
+    cout << "To unit:    " << dstUnit << "\n";
+    cout << "Result:     " << rslUnit << "\n";
 
     return 0;
 }
