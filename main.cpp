@@ -7,14 +7,14 @@
 
 using namespace std;
 
-//! Переводит из радиан в градус
-double toDeg(double rad) {
-    return rad * 180 / M_PI;
+//! Переводит в единицу измерения
+double toUnit(double unit) {
+    return unit * 180 / M_PI;
 }
 
-//! Переводит из градус в радиан
-double toRad(double deg) {
-    return deg * M_PI / 180;
+//! Переводит из единицы измерения
+double fromUnit(double unit) {
+    return unit * M_PI / 180;
 }
 
 
@@ -83,17 +83,17 @@ double convert(double number, double (convertUnit)(double) ) {
 
 int main(int argc, char *argv[])
 {
-    double rad1;
+    double srcUnit;
     cout.precision(DBL_DIG);
 
-    printf("Enter radians: ");
-    cin >> rad1;
+    printf("From unit: ");
+    cin >> srcUnit;
 
-    double deg = convert(rad1, toDeg);
-    double rad = convert(deg,  toRad);
+    double dstUnit = convert(srcUnit, toUnit);
+    double rslUnit = convert(dstUnit,  fromUnit);
 
-    cout << "Degrees: " << deg << "\n";
-    cout << "Result:  " << rad << "\n";
+    cout << "To unit: " << dstUnit << "\n";
+    cout << "Result:  " << rslUnit << "\n";
 
     return 0;
 }
