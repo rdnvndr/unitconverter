@@ -2,23 +2,27 @@
 #include <stdio.h>
 
 #define _USE_MATH_DEFINES
+#define EPS 1e-14
+
 #include <math.h>
 #include <cfloat>
 
 using namespace std;
 
-//! Переводит в единицу измерения
-double toUnit(double unit) {
+//! Переводит в базовую единицу измерения
+double toBaseUnit(double unit) {
 //    return unit * 180 / M_PI;
-    return unit * 0.061048;
+//    return unit * 0.061048;
 //    return unit / 3;
+    return unit / 100;
 }
 
-//! Переводит из единицы измерения
-double fromUnit(double unit) {
+//! Переводит из базовой единицы измерения
+double fromBaseUnit(double unit) {
 //    return unit * M_PI / 180;
-    return unit / 0.061048;
+//    return unit / 0.061048;
 //     return unit * 3;
+    return unit * 100;
 }
 
 
@@ -35,15 +39,21 @@ double roundNumber(double number, int places)
     return roundNumber(number*off)/off;
 }
 
+//! Округление до целого в меньшую сторону
+double floorNumber(double number, int places)
+{
+    double off = pow(10.0, places);
+    return floor(number*off)/off;
+}
 
 //! Количество цифр после запятой
 int digitsAfterDecimalPoint(double number) {
     int count = 0;
 
-    double n = number;
-    while ((n - floor(n)) != 0.0) {
+    double n = floor(number);
+    while (abs(n - number) > EPS) {
         count++;
-        n = number * pow(10.0, count);
+        n = floorNumber(number, count);
     }
     return count+1;
 }
@@ -62,13 +72,19 @@ int zerosAfterDecimalPoint(double number) {
 }
 
 //! Конвертирование
-double convert(double number, double (convertUnit)(double) ) {
+double convert(double number, bool isToBase, double (convertUnit)(double)) {
     // Определяется точность числа
     int countOfDigits = digitsAfterDecimalPoint(number);
 
-    // Задаётся погрешность числа
-    double ex1 = -5 * pow(10.0, -countOfDigits);
-    double ex2 =  5 * pow(10.0, -countOfDigits);
+    if (!isToBase && countOfDigits < 14) {
+        --countOfDigits;
+        number = floorNumber(number, countOfDigits);
+    }
+
+    // Задаётся погрешность числа, при конвертации. Увеличивает точность при
+    // конвертации в базовую
+    double ex1 = (isToBase ? -0.5 : -5) * pow(10.0, -countOfDigits);
+    double ex2 = (isToBase ?  0.4 :  4) * pow(10.0, -countOfDigits);
 
     // Конвертируется число
     double y  = convertUnit(number);
@@ -80,26 +96,31 @@ double convert(double number, double (convertUnit)(double) ) {
     double ey1 = abs(y  - y1);
     double ey2 = abs(y  - y2);
 
-    if (ey != 0) {
+    // Если точность сконвертированного числа больше точности типа, то число
+    // по точности не округляется
+    if (ey1 > EPS*10 && ey2 > EPS*10) {
         // Вычисляется точность сконвертированного числа
-        int countOfZeros = zerosAfterDecimalPoint(ey);
+        int countOfZeros = zerosAfterDecimalPoint(ey1 > ey2 ? ey1 : ey2);
 
         // Уточняется точность сконвертированного числа
-        bool upperBoundCorrection = (y * pow(10.0, countOfZeros-1)
-                - floor(y * pow(10.0, countOfZeros-1))
-                + ey2 * pow(10.0, countOfZeros-1)) >= 1;
-        bool lowerBoundCorrection = (y1 * pow(10.0, countOfZeros-1)
-                - floor(y1 * pow(10.0, countOfZeros-1))
-                + ey1 * pow(10.0, countOfZeros-1)) >= 1;
-        if (upperBoundCorrection || lowerBoundCorrection)
+        if (ey1 * pow(10.0, countOfZeros) > 5 || ey2 * pow(10.0, countOfZeros) > 4)
+            countOfZeros--;
+
+        // Уменьшает точность для восстановления оригинального значения
+        if (!isToBase)
             countOfZeros--;
 
         // Конвертируется число с заданной точностью
         double result = roundNumber(y, countOfZeros);
-        if (digitsAfterDecimalPoint(result)-1 != countOfZeros)
-            return y;
-        else
-            return result;
+        if (isToBase) {
+            // При конвертации в базовую для сохранения точности дробного числа
+            // (например 0.70) в конец  добавляет число-маркер.
+            // Число 1.55 с округлением используется для зануления разрядов мантисы
+            result = roundNumber(result +  1.55 * pow(10.0, -(countOfZeros + 1)),
+                                 (countOfZeros + 1));
+        }
+        cout << "countOfZeros:" << countOfZeros << "\n";
+        return result;
     } else {
         return y;
     }
@@ -114,8 +135,8 @@ int main(int argc, char *argv[])
     cin >> srcUnit;
     cout << "Input unit: " << srcUnit << "\n";
 
-    double dstUnit = convert(srcUnit, toUnit);
-    double rslUnit = convert(dstUnit, fromUnit);
+    double dstUnit = convert(srcUnit, true,  toBaseUnit);
+    double rslUnit = convert(dstUnit, false, fromBaseUnit);
 
     cout << "To unit:    " << dstUnit << "\n";
     cout << "Result:     " << rslUnit << "\n";
