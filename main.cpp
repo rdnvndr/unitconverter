@@ -12,17 +12,17 @@ using namespace std;
 //! Переводит в базовую единицу измерения
 double toBaseUnit(double unit) {
 //    return unit * 180 / M_PI;
-//    return unit * 0.061048;
+    return unit * 0.061048;
 //    return unit / 3;
-    return unit / 100;
+//    return unit / 100;
 }
 
 //! Переводит из базовой единицы измерения
 double fromBaseUnit(double unit) {
 //    return unit * M_PI / 180;
-//    return unit / 0.061048;
+    return unit / 0.061048;
 //     return unit * 3;
-    return unit * 100;
+//    return unit * 100;
 }
 
 
@@ -58,6 +58,18 @@ int digitsAfterDecimalPoint(double number) {
     return count;
 }
 
+//! Количество цифр до запятой
+int digitsBeforeDecimalPoint(double number) {
+    int count = 0;
+
+    double n = floor(number);
+    while (n >= 1) {
+        count++;
+        n = number * pow(10.0, -count);
+    }
+    return count;
+}
+
 //! Количество нулей после запятой
 int zerosAfterDecimalPoint(double number) {
     int count = 0;
@@ -76,7 +88,12 @@ double convert(double number, bool isToBase, double (convertUnit)(double)) {
     // Определяется точность числа
     int countOfDigits = digitsAfterDecimalPoint(number);
 
-    if (!isToBase && countOfDigits <= 14) {
+    // Проверка на переполнение мантисы
+    if (digitsBeforeDecimalPoint(number) + countOfDigits + 1 >= DBL_DIG)
+         return convertUnit(number);
+
+    // Уменьшаем точность приконвертировании из базовой
+    if (!isToBase) {
         number = floorNumber(number, countOfDigits);
         --countOfDigits;
     }
@@ -98,7 +115,7 @@ double convert(double number, bool isToBase, double (convertUnit)(double)) {
 
     // Если точность сконвертированного числа больше точности типа, то число
     // по точности не округляется
-    if (ey1 > EPS*10 && ey2 > EPS*10) {
+    if (ey1 > EPS && ey2 > EPS) {
         // Вычисляется точность сконвертированного числа
         int countOfZeros = zerosAfterDecimalPoint(ey1 > ey2 ? ey1 : ey2);
 
@@ -119,7 +136,7 @@ double convert(double number, bool isToBase, double (convertUnit)(double)) {
             result = roundNumber(result +  1.55 * pow(10.0, -(countOfZeros + 1)),
                                  (countOfZeros + 1));
         }
-        cout << "countOfZeros:" << countOfZeros << "\n";
+//        cout << "countOfZeros:" << countOfZeros << "\n";
         return result;
     } else {
         return y;
