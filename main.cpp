@@ -55,7 +55,7 @@ int digitsAfterDecimalPoint(double number) {
         count++;
         n = floorNumber(number, count);
     }
-    return count+1;
+    return count;
 }
 
 //! Количество нулей после запятой
@@ -76,15 +76,15 @@ double convert(double number, bool isToBase, double (convertUnit)(double)) {
     // Определяется точность числа
     int countOfDigits = digitsAfterDecimalPoint(number);
 
-    if (!isToBase && countOfDigits < 14) {
-        --countOfDigits;
+    if (!isToBase && countOfDigits <= 14) {
         number = floorNumber(number, countOfDigits);
+        --countOfDigits;
     }
 
     // Задаётся погрешность числа, при конвертации. Увеличивает точность при
     // конвертации в базовую
-    double ex1 = (isToBase ? -0.5 : -5) * pow(10.0, -countOfDigits);
-    double ex2 = (isToBase ?  0.4 :  4) * pow(10.0, -countOfDigits);
+    double ex1 = (isToBase ? -0.05 : -0.5) * pow(10.0, -countOfDigits);
+    double ex2 = (isToBase ?  0.04 :  0.4) * pow(10.0, -countOfDigits);
 
     // Конвертируется число
     double y  = convertUnit(number);
