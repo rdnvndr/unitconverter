@@ -143,10 +143,73 @@ double convert(double number, bool isToBase, double (convertUnit)(double)) {
     }
 }
 
+void convertingTest(double n, double (toBase)(double), double (fromBase)(double))
+{
+    double dstUnit = convert(n, true,  toBase);
+    double srcUnit = convert(dstUnit, false, fromBase);
+    if (n == srcUnit) {
+        cout << "[OK]   Convert: " << n << " -> " << dstUnit << "\n";
+    } else {
+        cout << "[FAIL] Convert: " << n
+             << "     Error: " << n << " != " << srcUnit << "\n";
+    }
+    return;
+}
+
+void tests() {
+    double (*toBase)(double);
+    double (*fromBase)(double);
+
+    cout << "Convert Degree -> Radian \n"
+         << "---------------------------------------------------------------\n";
+    toBase   = [] (double n) ->double { return n * 180 / M_PI; };
+    fromBase = [] (double n) ->double { return n * M_PI / 180; };
+
+    convertingTest(3.14, toBase, fromBase);
+    convertingTest(0.12345678, toBase, fromBase);
+    convertingTest(0.1234568, toBase, fromBase);
+    convertingTest(1.235, toBase, fromBase);
+
+
+    cout << "\nConvert Kilograme -> Pood \n"
+         << "---------------------------------------------------------------\n";
+    toBase   = [] (double n) ->double { return n * 0.061048; };
+    fromBase = [] (double n) ->double { return n / 0.061048; };
+
+    convertingTest(16.3805530074695, toBase, fromBase);
+    convertingTest(1.234567890123456, toBase, fromBase);
+    convertingTest(12.34567890123456, toBase, fromBase);
+
+
+    cout << "\nConvert 1 -> 1/3 \n"
+         << "---------------------------------------------------------------\n";
+    toBase   = [] (double n) ->double { return n / 3; };
+    fromBase = [] (double n) ->double { return n * 3; };
+
+    convertingTest(1, toBase, fromBase);
+    convertingTest(2.1, toBase, fromBase);
+    convertingTest(2.9, toBase, fromBase);
+    convertingTest(7.5, toBase, fromBase);
+
+
+    cout << "\nConvert 1 -> 1/100 \n"
+         << "---------------------------------------------------------------\n";
+    toBase   = [] (double n) ->double { return n / 100; };
+    fromBase = [] (double n) ->double { return n * 100; };
+
+    convertingTest(1, toBase, fromBase);
+    convertingTest(1.1, toBase, fromBase);
+    convertingTest(1.001, toBase, fromBase);
+
+    cout << "\n";
+}
+
 int main(int argc, char *argv[])
 {
     double srcUnit;
     cout.precision(DBL_DIG);
+
+    tests(); return 0;
 
     printf("From unit:  ");
     cin >> srcUnit;
