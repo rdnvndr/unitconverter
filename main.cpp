@@ -46,13 +46,22 @@ double floorNumber(double number, int places)
     return floor(number*off)/off;
 }
 
+//! Сравнение вещественных чисел
+bool compare(double p1, double p2) {
+    if (abs(p1) <= 0.000000000001 || abs(p2) <= 0.000000000001) {
+        ++p1;
+        ++p2;
+    }
+    return (abs(p1 - p2) * 1000000000000.0 <= fmin(abs(p1), abs(p2)));
+}
+
 //! Количество цифр после запятой
 int digitsAfterDecimalPoint(double number) {
     int count = 0;
 
     double n = floor(number);
     while (abs(number - n) > EPS) {
-        count++;
+        ++count;
         n = floorNumber(number, count);
     }
     return count;
@@ -64,7 +73,7 @@ int digitsBeforeDecimalPoint(double number) {
 
     double n = floor(number);
     while (n >= 1) {
-        count++;
+        ++count;
         n = number * pow(10.0, -count);
     }
     return count;
@@ -76,7 +85,7 @@ int zerosAfterDecimalPoint(double number) {
 
     double n = number;
     while (n < 1) {
-        count++;
+        ++count;
         n = number * pow(10.0, count);
     }
 
@@ -108,8 +117,7 @@ double convert(double number, bool isToBase, double (convertUnit)(double)) {
     double y1 = convertUnit(number + ex1);
     double y2 = convertUnit(number + ex2);
 
-    // Вычисляется погрешность сконвертированного числа
-    double ey  = abs(y2 - y1);
+    // Вычисляется абсолютную погрешность сконвертированного числа
     double ey1 = abs(y  - y1);
     double ey2 = abs(y  - y2);
 
@@ -121,41 +129,43 @@ double convert(double number, bool isToBase, double (convertUnit)(double)) {
 
         // Уточняется точность сконвертированного числа
         if (ey1 * pow(10.0, countOfZeros) > 5 || ey2 * pow(10.0, countOfZeros) > 4)
-            countOfZeros--;
+            --countOfZeros;
 
         // Уменьшает точность для восстановления оригинального значения
         if (!isToBase)
-            countOfZeros--;
+            --countOfZeros;
 
         // Конвертируется число с заданной точностью
         double result = roundNumber(y, countOfZeros);
         if (isToBase) {
             // При конвертации в базовую для сохранения точности дробного числа
             // (например 0.70) в конец  добавляет число-маркер.
-            // Число 1.55 с округлением используется для зануления разрядов мантисы
-            result = roundNumber(result +  1.55 * pow(10.0, -(countOfZeros + 1)),
-                                 (countOfZeros + 1));
+            result = floorNumber(result +  0.11111111111111 * pow(10.0, -countOfZeros),
+                                 countOfZeros + 1);
         }
-//        cout << "countOfZeros:" << countOfZeros << "\n";
         return result;
     } else {
         return y;
     }
 }
 
+//! Тест проверки конвертирования
 void convertingTest(double n, double (toBase)(double), double (fromBase)(double))
 {
     double dstUnit = convert(n, true,  toBase);
     double srcUnit = convert(dstUnit, false, fromBase);
-    if (n == srcUnit) {
-        cout << "[OK]   Convert: " << n << " -> " << dstUnit << "\n";
+
+    if (compare(n, srcUnit)) {
+        cout << "[OK]   Convert: " << n << " -> " << dstUnit << "\n"
+             << "                " << srcUnit << "\n";
     } else {
-        cout << "[FAIL] Convert: " << n
-             << "     Error: " << n << " != " << srcUnit << "\n";
+        cout << "[FAIL] Convert: " << n << " -> " << dstUnit << "\n"
+             << "                " << srcUnit << "\n";
     }
     return;
 }
 
+//! Прогон тестов конвертирования
 void tests() {
     double (*toBase)(double);
     double (*fromBase)(double);
@@ -176,6 +186,7 @@ void tests() {
     toBase   = [] (double n) ->double { return n * 0.061048; };
     fromBase = [] (double n) ->double { return n / 0.061048; };
 
+    convertingTest(16.38055300746, toBase, fromBase);
     convertingTest(16.3805530074695, toBase, fromBase);
     convertingTest(1.234567890123456, toBase, fromBase);
     convertingTest(12.34567890123456, toBase, fromBase);
