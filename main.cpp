@@ -51,7 +51,7 @@ int digitsAfterDecimalPoint(double number) {
     int count = 0;
 
     double n = floor(number);
-    while (abs(n - number) > EPS) {
+    while (abs(number - n) > EPS) {
         count++;
         n = floorNumber(number, count);
     }
@@ -92,7 +92,7 @@ double convert(double number, bool isToBase, double (convertUnit)(double)) {
     if (digitsBeforeDecimalPoint(number) + countOfDigits + 1 >= DBL_DIG)
          return convertUnit(number);
 
-    // Уменьшаем точность приконвертировании из базовой
+    // Уменьшаем точность при конвертировании из базовой
     if (!isToBase) {
         number = floorNumber(number, countOfDigits);
         --countOfDigits;
@@ -168,7 +168,7 @@ void tests() {
     convertingTest(3.14, toBase, fromBase);
     convertingTest(0.12345678, toBase, fromBase);
     convertingTest(0.1234568, toBase, fromBase);
-    convertingTest(1.235, toBase, fromBase);
+    convertingTest(0.1235, toBase, fromBase);
 
 
     cout << "\nConvert Kilograme -> Pood \n"
@@ -190,6 +190,7 @@ void tests() {
     convertingTest(2.1, toBase, fromBase);
     convertingTest(2.9, toBase, fromBase);
     convertingTest(7.5, toBase, fromBase);
+    convertingTest(1.235, toBase, fromBase);
 
 
     cout << "\nConvert 1 -> 1/100 \n"
@@ -199,7 +200,8 @@ void tests() {
 
     convertingTest(1, toBase, fromBase);
     convertingTest(1.1, toBase, fromBase);
-    convertingTest(1.001, toBase, fromBase);
+    convertingTest(1.01, toBase, fromBase);
+    convertingTest(1.2346, toBase, fromBase);
 
     cout << "\n";
 }
